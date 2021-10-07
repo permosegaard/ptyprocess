@@ -453,6 +453,8 @@ impl PtyProcess {
                 return status.map_err(nix_error_to_io);
             }
 
+            let mut activity = false;
+
             // it prints STDIN input as well,
             // by echoing it.
             //
@@ -466,6 +468,8 @@ impl PtyProcess {
 
                 std::io::stdout().write_all(&buf[..n])?;
                 std::io::stdout().flush()?;
+
+                activity = true;
             }
 
             if let Some(n) = stdin_stream.try_read(&mut buf)? {
@@ -485,6 +489,12 @@ impl PtyProcess {
 
                     self.write_all(&buf[i..i + 1])?;
                 }
+
+                activity = true;
+            }
+
+            if !activity {
+                std::thread::sleep(std::time::Duration::from_millis(10));
             }
         }
     }
